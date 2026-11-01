@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Expression Tree Calculator — Team Member 2</title>
+<style>
+:root{--bg:#f3f6fb;--card:#fff;--ink:#182235;--muted:#62718a;--blue:#3156a6;--border:#dbe3ee;--op:#dce8ff;--leaf:#d9f4e6;--gold:#ffe5a3}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Arial,sans-serif;color:var(--ink)}
+header{background:#182235;color:white;text-align:center;padding:23px 15px}header h1{margin:0 0 7px;font-size:clamp(1.35rem,3vw,2rem)}header p{margin:0;color:#d4deed}
+main{max-width:1050px;margin:20px auto;padding:0 14px 30px}.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:17px;margin-bottom:15px;box-shadow:0 3px 12px #1c31500a}
+h2{font-size:1.08rem;margin:0 0 12px}.muted{color:var(--muted);font-size:.9rem;line-height:1.45}
+.expr{text-align:center;font-size:1.45rem;font-weight:bold;padding:9px}
+.values{display:grid;grid-template-columns:repeat(5,minmax(75px,1fr));gap:10px;margin:14px 0}
+label{font-size:.88rem;color:var(--muted);font-weight:bold}input{display:block;width:100%;margin-top:5px;padding:11px;border:1px solid #c7d2e2;border-radius:8px;font-size:1.05rem;color:var(--ink)}
+button{border:0;border-radius:9px;padding:11px 15px;background:var(--blue);color:white;font-weight:bold;cursor:pointer}button.secondary{background:#e9eef6;color:#263650}button:hover{filter:brightness(.96)}
+.actions{display:flex;gap:9px;flex-wrap:wrap}.answer{background:#eef8f1;border:1px solid #b8dfc6;border-radius:11px;padding:14px;margin-top:13px}.answer strong{font-size:1.45rem;color:#17653a}.error{color:#a32121;font-weight:bold}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.treebox{overflow:auto;background:#fbfcff;border:1px solid var(--border);border-radius:10px;padding:8px;min-height:210px}
+svg{display:block;min-width:420px;width:100%;height:auto}.edge{stroke:#9aa8bb;stroke-width:2.5}.node circle{stroke:#65758e;stroke-width:1.8}.node.op circle{fill:var(--op)}.node.leaf circle{fill:var(--leaf)}.node text{font-size:17px;font-weight:bold;text-anchor:middle;dominant-baseline:middle;fill:#182235}
+.output{background:#f6f8fc;border-radius:9px;padding:11px;line-height:1.65;overflow-wrap:anywhere;min-height:42px}
+.tokenrow{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.token{padding:7px 10px;background:#f2f5fb;border:1px solid #ccd6e5;border-radius:7px;font-weight:bold}
+.stack{display:flex;gap:7px;flex-wrap:wrap;min-height:45px;background:#f7f9fc;border:1px dashed #aab7c9;padding:9px;border-radius:9px}.stack span{padding:7px 9px;background:var(--op);border:1px solid #a9bee9;border-radius:7px;font-weight:bold}
+.small{font-size:.82rem;color:var(--muted);margin-top:8px}
+@media(max-width:720px){.grid{grid-template-columns:1fr}.values{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}input{padding:9px 5px}}
+</style>
+</head>
+<body>
+<header><h1>Expression Tree Calculator</h1><p>Team Member 2 · Stack-based construction using postfix notation</p></header>
+<main>
+<section class="card">
+ <h2>1. Enter operand values</h2>
+ <div class="muted">The expression stays exactly as given: (A+B) × (C−D) ÷ E. Change the values below and press Calculate.</div>
+ <div class="expr">(A + B) × (C − D) ÷ E</div>
+ <div class="values">
+  <label>A<input id="A" type="number" value="4" step="any"></label>
+  <label>B<input id="B" type="number" value="6" step="any"></label>
+  <label>C<input id="C" type="number" value="9" step="any"></label>
+  <label>D<input id="D" type="number" value="3" step="any"></label>
+  <label>E<input id="E" type="number" value="2" step="any"></label>
+ </div>
+ <div class="actions"><button id="calculate">Calculate result</button><button class="secondary" id="reset">Reset given values</button></div>
+ <div class="answer" id="answer" aria-live="polite">Final result: <strong>30</strong></div>
+ <div class="output" id="working">Calculation: (4 + 6) × (9 − 3) ÷ 2 = 10 × 6 ÷ 2 = 30</div>
+</section>
+
+<div class="grid">
+<section class="card">
+ <h2>2. Expression tree</h2>
+ <div class="treebox">
+ <svg viewBox="0 0 540 300" role="img" aria-label="Expression tree for the given expression">
+  <g class="edge" fill="none">
+   <path d="M270 30 L170 105 M270 30 L410 105 M170 105 L105 190 M170 105 L245 190 M105 190 L65 270 M105 190 L145 270 M245 190 L215 270 M245 190 L285 270"/>
+  </g>
+  <g class="node op"><circle cx="270" cy="30" r="22"/><text x="270" y="31">÷</text></g>
+  <g class="node op"><circle cx="170" cy="105" r="22"/><text x="170" y="106">×</text></g>
+  <g class="node leaf"><circle cx="410" cy="105" r="22"/><text x="410" y="106">E</text></g>
+  <g class="node op"><circle cx="105" cy="190" r="22"/><text x="105" y="191">+</text></g>
+  <g class="node op"><circle cx="245" cy="190" r="22"/><text x="245" y="191">−</text></g>
+  <g class="node leaf"><circle cx="65" cy="270" r="20"/><text x="65" y="271">A</text></g>
+  <g class="node leaf"><circle cx="145" cy="270" r="20"/><text x="145" y="271">B</text></g>
+  <g class="node leaf"><circle cx="215" cy="270" r="20"/><text x="215" y="271">C</text></g>
+  <g class="node leaf"><circle cx="285" cy="270" r="20"/><text x="285" y="271">D</text></g>
+ </svg>
+ </div>
+ <div class="small">Blue nodes = operators · Green nodes = operands. The same tree is evaluated using the values entered above.</div>
+</section>
+
+<section class="card">
+ <h2>3. Calculation steps</h2>
+ <div id="steps" class="output">1. A + B = 4 + 6 = 10<br>2. C − D = 9 − 3 = 6<br>3. 10 × 6 = 60<br>4. 60 ÷ 2 = 30</div>
+ <h2 style="margin-top:17px">4. Tree traversals</h2>
+ <div class="output"><b>Preorder:</b> / * + A B - C D E</div>
+ <div class="output" style="margin-top:7px"><b>Inorder:</b> (((A+B)*(C-D))/E)</div>
+ <div class="output" style="margin-top:7px"><b>Postorder:</b> A B + C D - * E /</div>
+</section>
+</div>
+
+<section class="card">
+ <h2>5. Stack-based construction demonstration</h2>
+ <div class="muted">Postfix expression: AB+CD-*E/. Press Next token to see how the stack builds the tree.</div>
+ <div class="tokenrow" id="tokens"></div>
+ <div class="actions"><button id="next">Next token</button><button class="secondary" id="run">Run all</button><button class="secondary" id="restart">Restart demonstration</button></div>
+ <p><b>Stack (top on right):</b></p><div class="stack" id="stack">Empty</div>
+ <div class="output" id="constructionMsg" style="margin-top:10px">Start the demonstration. Operands are pushed; operators pop two subtrees and combine them.</div>
+</section>
+<section class="card">
+ <h2>How to present this model</h2>
+ <p class="muted">“I enter the values of A, B, C, D and E, then click Calculate Result to get the answer and see each calculation step. My construction approach uses postfix notation and a stack. Operands are pushed onto the stack; when an operator appears, two subtrees are popped and connected under that operator. The final tree represents the given expression.”</p>
+</section>
+</main>
+<script>
+const postfix=['A','B','+','C','D','-','*','E','/'];let i=0,st=[];
+const $=id=>document.getElementById(id);
+function fmt(x){return Number.isInteger(x)?String(x):String(Number(x.toFixed(8)))}
+function calculate(){
+ const v={};for(const k of ['A','B','C','D','E']){let s=$(k).value;if(s.trim()===''||!Number.isFinite(Number(s))){$('answer').innerHTML='<span class="error">Enter a valid number for '+k+'.</span>';return}v[k]=Number(s)}
+ if(v.E===0){$('answer').innerHTML='<span class="error">Cannot divide by zero. E must not be 0.</span>';$('working').textContent='Please change E to a non-zero value.';return}
+ const ab=v.A+v.B,cd=v.C-v.D,m=ab*cd,r=m/v.E;
+ $('answer').innerHTML='Final result: <strong>'+fmt(r)+'</strong>';
+ $('working').textContent='Calculation: ('+fmt(v.A)+' + '+fmt(v.B)+') × ('+fmt(v.C)+' − '+fmt(v.D)+') ÷ '+fmt(v.E)+' = '+fmt(ab)+' × '+fmt(cd)+' ÷ '+fmt(v.E)+' = '+fmt(r);
+ $('steps').innerHTML='1. A + B = '+fmt(v.A)+' + '+fmt(v.B)+' = <b>'+fmt(ab)+'</b><br>2. C − D = '+fmt(v.C)+' − '+fmt(v.D)+' = <b>'+fmt(cd)+'</b><br>3. '+fmt(ab)+' × '+fmt(cd)+' = <b>'+fmt(m)+'</b><br>4. '+fmt(m)+' ÷ '+fmt(v.E)+' = <b>'+fmt(r)+'</b>';
+}
+function drawTokens(){ $('tokens').innerHTML='';postfix.forEach((t,j)=>{let s=document.createElement('span');s.className='token';s.textContent=t+(j<i?' ✓':j===i?' ←':'');$('tokens').appendChild(s)})}
+function drawStack(){ $('stack').innerHTML=st.length?st.map(x=>'<span>'+x+'</span>').join(''):'Empty'}
+function next(){
+ if(i>=postfix.length)return;let t=postfix[i],msg='';
+ if('ABCDE'.includes(t)){st.push(t);msg='Token '+t+' is an operand: create a leaf node and PUSH it onto the stack.'}
+ else{if(st.length<2){msg='Invalid postfix expression.'}else{let right=st.pop(),left=st.pop();let sub='('+left+t+right+')';st.push(sub);msg='Token '+t+' is an operator: POP right subtree '+right+', then left subtree '+left+'. Connect them under '+t+' and PUSH '+sub+'.'}}
+ i++;drawTokens();drawStack();$('constructionMsg').textContent=msg+(i===postfix.length?' Construction complete: the stack contains one expression tree.':'');
+ $('next').disabled=i>=postfix.length;$('run').disabled=i>=postfix.length;
+}
+function restart(){i=0;st=[];drawTokens();drawStack();$('next').disabled=false;$('run').disabled=false;$('constructionMsg').textContent='Start the demonstration. Operands are pushed; operators pop two subtrees and combine them.'}
+$('calculate').addEventListener('click',calculate);
+$('reset').addEventListener('click',()=>{[['A',4],['B',6],['C',9],['D',3],['E',2]].forEach(([k,v])=>$(k).value=v);calculate()});
+$('next').addEventListener('click',next);
+$('run').addEventListener('click',()=>{while(i<postfix.length)next()});
+$('restart').addEventListener('click',restart);
+drawTokens();drawStack();calculate();
+</script>
+</body>
+</html>
